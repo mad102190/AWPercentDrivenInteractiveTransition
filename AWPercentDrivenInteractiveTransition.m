@@ -135,6 +135,25 @@
         layer.beginTime = 0.0; // Need to reset to 0 to avoid flickering :S
         CFTimeInterval timeSincePause = [layer convertTime:CACurrentMediaTime() fromLayer:nil] - pausedTime;
         layer.beginTime = timeSincePause;
+    }else{
+        
+        // When cancelling the animation, we want to make sure the toView doesn't flash above the fromView in the animation completion block
+        UIView *toView, *fromView;
+        if ([_transitionContext respondsToSelector:@selector(viewForKey:)]) {
+            toView = [_transitionContext viewForKey:UITransitionContextToViewKey];
+            fromView = [_transitionContext viewForKey:UITransitionContextFromViewKey];
+        }else{
+            toView = [_transitionContext viewControllerForKey:UITransitionContextToViewControllerKey].view;
+            fromView = [_transitionContext viewControllerForKey:UITransitionContextFromViewControllerKey].view;
+        }
+        
+        // Here, the toView corresponds to the view that was going to be presented but was then cancelled.
+        // Therefore, we set it's alpha to and bring the original view to the front of the container view and back to its original position.
+        toView.alpha = 0;
+        fromView.alpha = 1.0;
+        fromView.transform = CGAffineTransformIdentity;
+        
+        [[_transitionContext containerView] bringSubviewToFront:fromView];
     }
 }
 
